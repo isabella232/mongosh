@@ -167,6 +167,12 @@ Compile the standalone executable (this may take some time):
 npm run compile-exec
 ```
 
+Compile the standalone executable (this is faster, but not the official build):
+
+```shell
+npm run compile-exec -- --no-signable
+```
+
 Compile a specific package, e.g. the `.deb` for Debian:
 
 ```shell

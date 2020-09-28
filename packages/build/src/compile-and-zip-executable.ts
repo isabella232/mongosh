@@ -11,6 +11,7 @@ export default async function compileAndZipExecutable(config: Config): Promise<T
     config.execInput,
     config.outputDir,
     config.execNodeVersion,
+    config.signableExecutable,
     config.analyticsConfig,
     config.segmentKey,
   );

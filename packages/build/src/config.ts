@@ -25,7 +25,7 @@ export default interface Config {
   isCi?: boolean;
   platform?: string;
   execNodeVersion?: string;
-  signableBinary?: boolean;
+  signableExecutable?: boolean;
   buildVariant?: string;
   repo?: {
     owner: string;

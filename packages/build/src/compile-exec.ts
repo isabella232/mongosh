@@ -3,6 +3,7 @@ import path from 'path';
 import generateInput from './generate-input';
 import Platform from './platform';
 import SignableCompiler from './signable-compiler';
+import UnsignableCompiler from './unsignable-compiler';
 
 /**
  * The executable name enum.
@@ -52,6 +53,7 @@ const compileExec = async(
   execInput: string,
   outputDir: string,
   execNodeVersion: string,
+  signableExecutable: boolean,
   analyticsConfig: string,
   segmentKey: string): Promise<string> => {
   // We use Parcel to bundle up everything into a single JS under
@@ -62,9 +64,15 @@ const compileExec = async(
   const executable = executablePath(outputDir, os.platform());
   console.log('mongosh: creating binary:', executable);
 
-  const { compileJSFileAsBinary } = require('boxednode');
-  await new SignableCompiler(execInput, executable, execNodeVersion)
-    .compile(compileJSFileAsBinary);
+  if (signableExecutable) {
+    const { compileJSFileAsBinary } = require('boxednode');
+    await new SignableCompiler(execInput, executable, execNodeVersion)
+      .compile(compileJSFileAsBinary);
+  } else {
+    const { exec } = require('pkg');
+    await new UnsignableCompiler(input, executable, execNodeVersion)
+      .compile(exec);
+  }
 
   return executable;
 };
