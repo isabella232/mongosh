@@ -4,7 +4,7 @@ import ShellInternalState from './shell-internal-state';
 import { signatures, toShellResult } from './index';
 import ReplicaSet from './replica-set';
 import { EventEmitter } from 'events';
-import { expect } from 'chai';
+import chai, { expect } from 'chai';
 import Mongo from './mongo';
 import {
   ADMIN_DB,
@@ -15,6 +15,8 @@ import {
 import { CliServiceProvider } from '../../service-provider-server';
 import { startTestCluster, MongodSetup } from '../../../testing/integration-testing-hooks';
 import util from 'util';
+import sinonChai from 'sinon-chai';
+chai.use(sinonChai);
 
 describe('ReplicaSet', () => {
   describe('help', () => {
@@ -189,7 +191,7 @@ describe('ReplicaSet', () => {
       };
 
       it('calls serviceProvider.runCommandWithCheck without optional arg', async() => {
-        serviceProvider.runCommandWithCheck.resolves({ config: { version: 1 } });
+        serviceProvider.runCommandWithCheck.resolves({ config: { version: 1, protocolVersion: 1 } });
         await rs.reconfig(configDoc);
 
         expect(serviceProvider.runCommandWithCheck).to.have.been.calledWith(
@@ -202,14 +204,15 @@ describe('ReplicaSet', () => {
                 { _id: 1, host: 'rs2.example.net:27017' },
                 { _id: 2, host: 'rs3.example.net', arbiterOnly: true },
               ],
-              version: 2
+              version: 2,
+              protocolVersion: 1
             }
           }
         );
       });
 
       it('calls serviceProvider.runCommandWithCheck with arg', async() => {
-        serviceProvider.runCommandWithCheck.resolves({ config: 1 });
+        serviceProvider.runCommandWithCheck.resolves({ config: 1, protocolVersion: 1 });
         await rs.reconfig(configDoc, { force: true });
 
         expect(serviceProvider.runCommandWithCheck).to.have.been.calledWith(
@@ -222,7 +225,8 @@ describe('ReplicaSet', () => {
                 { _id: 1, host: 'rs2.example.net:27017' },
                 { _id: 2, host: 'rs3.example.net', arbiterOnly: true },
               ],
-              version: 1
+              version: 1,
+              protocolVersion: 1
             },
             force: true
           }
@@ -598,7 +602,12 @@ describe('ReplicaSet', () => {
       ['--single', '--replSet', replId],
       ['--single', '--replSet', replId]
     );
-    let cfg: {_id: string, members: {_id: number, host: string, priority: number}[]};
+    type ReplSetConfig = {
+      _id: string;
+      members: {_id: number, host: string, priority: number}[];
+      protocolVersion?: number;
+    };
+    let cfg: ReplSetConfig;
     let additionalServer: MongodSetup;
     let serviceProvider: CliServiceProvider;
     let internalState;
@@ -682,7 +691,7 @@ describe('ReplicaSet', () => {
     });
     describe('reconfig', () => {
       it('reconfig with one less secondary', async() => {
-        const newcfg = {
+        const newcfg: ReplSetConfig = {
           _id: replId,
           members: [ cfg.members[0], cfg.members[1] ]
         };
